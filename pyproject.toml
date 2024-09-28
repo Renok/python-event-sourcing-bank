@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "transfers"
+version = "0.1.0"
+description = ""
+authors = ["Alex K"]
+readme = "README.md"
+packages = [{include = "transfers", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pytest = "^8.3.3"
+black = "^24.8.0"
+setuptools = "^75.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
