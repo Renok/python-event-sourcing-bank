@@ -87,8 +87,8 @@ def test_transfer():
     account_from = uow.accounts.get(account_id_from)
     account_to = uow.accounts.get(account_id_to)
 
-    assert account_from.balacne == deposit_amount - transfer_amount
-    assert account_to.balacne == transfer_amount
+    assert account_from.balance == deposit_amount - transfer_amount
+    assert account_to.balance == transfer_amount
 
 
 def test_transfer_concurrent():

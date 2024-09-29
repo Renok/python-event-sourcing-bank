@@ -14,7 +14,7 @@ def test_sum_match():
     account.withdraw(100)
     account.deposit(20)
 
-    assert account.balacne == 270
+    assert account.balance == 270
 
     assert len(account.events) == 5
     assert account.version == len(account.events)
@@ -64,7 +64,7 @@ def test_load_events():
         WithdrawnEvent(account_id=account_id, amount=100),
     ]
     account.load_from_history(events)
-    account.balacne == 100
+    account.balance == 100
 
     assert len(account.events) == 3
     assert account.version == len(account.events)

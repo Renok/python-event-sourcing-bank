@@ -8,7 +8,7 @@ from transfers.domain import exceptions
 class Account:
     def __init__(self, account_id: UUID) -> None:
         self.account_id = account_id
-        self.balacne: int = 0
+        self.balance: int = 0
         self.version: int = 0
         self.commited_events: list = []
         self.uncommited_events: list = []
@@ -39,7 +39,7 @@ class Account:
 
     def withdraw(self, amount: int) -> None:
         self._check_amount(amount)
-        if amount > self.balacne:
+        if amount > self.balance:
             raise exceptions.NotEnoughFunds("Not enough funds")
 
         event = events_.WithdrawnEvent(account_id=self.account_id, amount=amount)
@@ -51,10 +51,10 @@ class Account:
         self._process_event(event)
 
     def _withdraw(self, event: events_.WithdrawnEvent) -> None:
-        self.balacne -= event.amount
+        self.balance -= event.amount
 
     def _deposit(self, event: events_.DepositedEvent) -> None:
-        self.balacne += event.amount
+        self.balance += event.amount
 
     def _process_event(self, event: events_.Event) -> None:
         self._apply_event(event)
