@@ -1,12 +1,10 @@
 import pytest
 from uuid import uuid4
-from transfers.domain.models import Account
-from transfers.domain.events import DepositedEvent, WithdrawnEvent
-from transfers.domain.exceptions import NotEnoughFunds, NotPositiveAmountTransfer
+from transfers.domain import models, exceptions, events
 
 
 def test_sum_match():
-    account = Account(uuid4())
+    account = models.Account(uuid4())
 
     account.create_account()
     account.deposit(400)
@@ -21,11 +19,11 @@ def test_sum_match():
 
 
 def test_withdraw_limit():
-    account = Account(uuid4())
+    account = models.Account(uuid4())
     account.create_account()
     account.deposit(100)
 
-    with pytest.raises(NotEnoughFunds):
+    with pytest.raises(exceptions.NotEnoughFunds):
         account.withdraw(200)
 
     assert len(account.events) == 2
@@ -33,10 +31,10 @@ def test_withdraw_limit():
 
 
 def test_negative_deposit():
-    account = Account(uuid4())
+    account = models.Account(uuid4())
     account.create_account()
 
-    with pytest.raises(NotPositiveAmountTransfer):
+    with pytest.raises(exceptions.NotPositiveAmountTransfer):
         account.deposit(-10)
 
     assert len(account.events) == 1
@@ -44,10 +42,10 @@ def test_negative_deposit():
 
 
 def test_negative_withdraw():
-    account = Account(uuid4())
+    account = models.Account(uuid4())
     account.create_account()
 
-    with pytest.raises(NotPositiveAmountTransfer):
+    with pytest.raises(exceptions.NotPositiveAmountTransfer):
         account.withdraw(-10)
 
     assert len(account.events) == 1
@@ -56,14 +54,14 @@ def test_negative_withdraw():
 
 def test_load_events():
     account_id = uuid4()
-    account = Account(account_id)
+    account = models.Account(account_id)
     account.create_account()
 
-    events = [
-        DepositedEvent(account_id=account_id, amount=200),
-        WithdrawnEvent(account_id=account_id, amount=100),
+    history_events = [
+        events.DepositedEvent(amount=200),
+        events.WithdrawnEvent(amount=100),
     ]
-    account.load_from_history(events)
+    account.load_from_history(history_events)
     account.balance == 100
 
     assert len(account.events) == 3

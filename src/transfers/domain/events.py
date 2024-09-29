@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from uuid import UUID
 
 
 @dataclass
 class Event:
-    account_id: UUID
+    pass
 
 
 @dataclass

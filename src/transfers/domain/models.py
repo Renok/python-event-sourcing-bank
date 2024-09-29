@@ -34,7 +34,7 @@ class Account:
                 f"Account {self.account_id} already exists"
             )
 
-        event = events_.AccountCreated(account_id=self.account_id)
+        event = events_.AccountCreated()
         self._process_event(event)
 
     def withdraw(self, amount: int) -> None:
@@ -42,12 +42,12 @@ class Account:
         if amount > self.balance:
             raise exceptions.NotEnoughFunds("Not enough funds")
 
-        event = events_.WithdrawnEvent(account_id=self.account_id, amount=amount)
+        event = events_.WithdrawnEvent(amount=amount)
         self._process_event(event)
 
     def deposit(self, amount: int) -> None:
         self._check_amount(amount)
-        event = events_.DepositedEvent(account_id=self.account_id, amount=amount)
+        event = events_.DepositedEvent(amount=amount)
         self._process_event(event)
 
     def _withdraw(self, event: events_.WithdrawnEvent) -> None:

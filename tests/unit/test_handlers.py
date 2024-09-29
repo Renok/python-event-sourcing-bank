@@ -76,8 +76,9 @@ def test_transfer():
     account_to.create_account()
     account_from.deposit(amount=deposit_amount)
 
-    uow.accounts.add(account_from)
-    uow.accounts.add(account_to)
+    with uow:
+        uow.accounts.add(account_from)
+        uow.accounts.add(account_to)
 
     cmd = commands.TransferCommand(
         account_id_from=account_id_from,
@@ -91,7 +92,3 @@ def test_transfer():
 
     assert account_from.balance == deposit_amount - transfer_amount
     assert account_to.balance == transfer_amount
-
-
-def test_transfer_concurrent():
-    pass
