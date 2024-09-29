@@ -16,12 +16,6 @@ class AbstractUnitOfWork(abc.ABC):
     def __exit__(self, *args):
         self.rollback()
 
-    def load_account(self, account_id: UUID) -> Account:
-        account = Account(account_id=account_id)
-        events = self.accounts.get_events(account_id=account_id)
-        account.load_from_events(events)
-        return account
-
     @abc.abstractmethod
     def commit(self):
         raise NotImplementedError

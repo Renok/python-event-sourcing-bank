@@ -19,25 +19,22 @@ def create_account(cmd: commands.CreateAccount, uow: AbstractUnitOfWork):
 
 def depoist(cmd: commands.DepositCommand, uow: AbstractUnitOfWork):
     with uow:
-        account = uow.load_account(account_id=cmd.account_id)
-        original_version = account.version
+        account = uow.accounts.get(account_id=cmd.account_id)
         account.deposit(cmd.amount)
-        uow.accounts.add_events(account, original_version)
+        uow.accounts.add(account)
         uow.commit()
 
 
 def transfer(cmd: commands.TransferCommand, uow: AbstractUnitOfWork):
+    # TODO use saga / process manager
     with uow:
-        account_from = uow.load_account(cmd.account_id_from)
-        account_to = uow.load_account(cmd.account_id_to)
-
-        account_from_original_version = account_from.version
-        account_to_original_version = account_to.version
+        account_from = uow.accounts.get(cmd.account_id_from)
+        account_to = uow.accounts.get(cmd.account_id_to)
 
         account_from.withdraw(cmd.amount)
         account_to.deposit(cmd.amount)
 
-        uow.accounts.add_events(account_from, account_from_original_version)
-        uow.accounts.add_events(account_to, account_to_original_version)
+        uow.accounts.add(account_from)
+        uow.accounts.add(account_to)
 
         uow.commit()

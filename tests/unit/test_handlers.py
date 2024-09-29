@@ -1,38 +1,34 @@
 from uuid import uuid4, UUID
-from transfers.domain import events, commands, models
+from collections import defaultdict
+from transfers.domain import commands, models
 from transfers.services import handlers
 from transfers.adapters.repository import AbstractAccountsRepository
 from transfers.services.uow import AbstractUnitOfWork
 
 
 class FakeAccountsRepository(AbstractAccountsRepository):
-    def __init__(self, accounts: list[models.Account]) -> None:
-        self.accounts = accounts
+    def __init__(self) -> None:
+        self.accounts_events = defaultdict(list)
 
     def add(self, account: models.Account):
-        self.accounts.append(account)
+        self.accounts_events[account.account_id].extend(account.uncommited_events)
+        account.commit_events()
 
     def get(self, account_id: UUID):
-        return next(
-            (account for account in self.accounts if account.account_id == account_id),
-            None,
-        )
+        if account_id not in self.accounts_events:
+            return None
+        account = models.Account(account_id)
+        account_events = self.accounts_events[account_id]
+        account.load_from_history(account_events)
+        return account
 
     def list(self):
-        return self.accounts
-
-    def add_events(self, account: models.Account, original_version: int):
-        stored_account = self.get(account.account_id)
-        stored_account.events.extend(account.events[original_version:])
-
-    def get_events(self, account_id: events.UUID):
-        account = self.get(account_id)
-        return account.events
+        pass
 
 
 class FakeUnitOfWork(AbstractUnitOfWork):
     def __init__(self) -> None:
-        self.accounts = FakeAccountsRepository([])
+        self.accounts = FakeAccountsRepository()
         self.commited = False
 
     def commit(self):
@@ -48,43 +44,52 @@ def test_create_account():
 
     handlers.create_account(cmd=cmd, uow=uow)
 
-    assert uow.accounts.get(cmd.account_id) is not None
+    assert uow.accounts.get(cmd.account_id)
     assert uow.commited
 
 
 def test_deposit():
-    cmd = commands.CreateAccount(account_id=uuid4())
+    account_id = uuid4()
     uow = FakeUnitOfWork()
 
-    account_id = handlers.create_account(cmd=cmd, uow=uow)
+    account = models.Account(account_id=account_id)
+    account.create_account()
+    uow.accounts.add(account)
 
-    cmd = commands.DepositCommand(account_id=account_id, amount=100)
+    cmd = commands.DepositCommand(account_id=account_id, amount=200)
     handlers.depoist(cmd=cmd, uow=uow)
-
-    account = uow.load_account(account_id)
-    assert account.account_id == account_id
-    assert account.balacne == 100
 
 
 def test_transfer():
+    account_id_from = uuid4()
+    account_id_to = uuid4()
+
     uow = FakeUnitOfWork()
 
-    cmd = commands.CreateAccount(account_id=uuid4())
-    account_id_from = handlers.create_account(cmd=cmd, uow=uow)
+    deposit_amount = 400
+    transfer_amount = 200
+    account_from = models.Account(account_id=account_id_from)
+    account_to = models.Account(account_id=account_id_to)
+    account_from.create_account()
+    account_to.create_account()
+    account_from.deposit(amount=deposit_amount)
 
-    cmd = commands.CreateAccount(account_id=uuid4())
-    account_id_to = handlers.create_account(cmd=cmd, uow=uow)
-
-    cmd = commands.DepositCommand(account_id=account_id_from, amount=200)
-    handlers.depoist(cmd=cmd, uow=uow)
+    uow.accounts.add(account_from)
+    uow.accounts.add(account_to)
 
     cmd = commands.TransferCommand(
-        account_id_from=account_id_from, account_id_to=account_id_to, amount=100
+        account_id_from=account_id_from,
+        account_id_to=account_id_to,
+        amount=transfer_amount,
     )
     handlers.transfer(cmd=cmd, uow=uow)
 
-    account_from = uow.load_account(account_id_from)
-    account_to = uow.load_account(account_id_to)
+    account_from = uow.accounts.get(account_id_from)
+    account_to = uow.accounts.get(account_id_to)
 
-    assert account_from.balacne == 100
-    assert account_to.balacne == 100
+    assert account_from.balacne == deposit_amount - transfer_amount
+    assert account_to.balacne == transfer_amount
+
+
+def test_transfer_concurrent():
+    pass

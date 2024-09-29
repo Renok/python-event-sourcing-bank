@@ -63,7 +63,7 @@ def test_load_events():
         DepositedEvent(account_id=account_id, amount=200),
         WithdrawnEvent(account_id=account_id, amount=100),
     ]
-    account.load_from_events(events)
+    account.load_from_history(events)
     account.balacne == 100
 
     assert len(account.events) == 3
