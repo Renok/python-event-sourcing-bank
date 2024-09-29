@@ -1,5 +1,7 @@
-from uuid import uuid4, UUID
+from uuid import uuid4
 from collections import defaultdict
+
+
 from transfers.domain import commands, models
 from transfers.services import handlers
 from transfers.adapters.repository import AbstractAccountsRepository
@@ -10,11 +12,11 @@ class FakeAccountsRepository(AbstractAccountsRepository):
     def __init__(self) -> None:
         self.accounts_events = defaultdict(list)
 
-    def add(self, account: models.Account):
+    def add(self, account):
         self.accounts_events[account.account_id].extend(account.uncommited_events)
         account.commit_events()
 
-    def get(self, account_id: UUID):
+    def get(self, account_id):
         if account_id not in self.accounts_events:
             return None
         account = models.Account(account_id)
